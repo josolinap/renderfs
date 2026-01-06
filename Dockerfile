@@ -34,7 +34,9 @@ RUN apk --no-cache add ca-certificates
 # Create directory and copy binary with proper permissions
 RUN mkdir -p /app
 COPY --from=builder /app/target/release/pentaract /app/pentaract
-COPY --from=ui /app/dist /ui
+COPY --from=ui /app/dist ./ui
 WORKDIR /app
 EXPOSE 8000
-ENTRYPOINT ["./pentaract"]
+# Make binary executable and run it with absolute path
+RUN chmod +x /app/pentaract
+ENTRYPOINT ["/app/pentaract"]
