@@ -17,11 +17,11 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: SUPERUSER_EMAIL
-        value: admin@renderfs.local
+        value: jomonsolinap@gmail.com
         description: "The email of the first superuser to be created. This will be used for login."
         sync: false
       - key: SUPERUSER_PASS
-        value: admin123456
+        value: @$Ss07271991
         description: "The password of the first superuser. Update this for production."
         sync: false
       - key: WORKERS
