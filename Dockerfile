@@ -30,13 +30,13 @@ RUN pnpm run build
 
 # Use debian slim as base for runtime to match builder libc (glibc)
 FROM debian:bookworm-slim AS runtime
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 # Create directory and copy binary with proper permissions
 RUN mkdir -p /app
 COPY --from=builder /app/target/release/pentaract /app/pentaract
 COPY --from=ui /app/dist ./ui
 WORKDIR /app
 EXPOSE 8000
-# Make binary executable and run it with absolute path
+# Make binary executable
 RUN chmod +x /app/pentaract
-ENTRYPOINT ["/app/pentaract"]
+CMD ["/app/pentaract"]
