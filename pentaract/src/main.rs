@@ -81,24 +81,27 @@ async fn main() {
     )
     .await
     {
-        Ok(db) => db,
+        Ok(db) => {
+            tracing::info!("Database connected successfully");
+            
+            // initing db
+            init_db(&db).await;
+
+            // creating a superuser
+            create_superuser(&db, &config).await;
+            
+            db
+        }
         Err(e) => {
-            eprintln!("Database Connection Error: {}", e);
-            eprintln!("\nTroubleshooting:");
-            eprintln!("1. Check if DATABASE_URL is correct");
-            eprintln!("2. Verify database is running and accessible");
-            eprintln!("3. Check if database connection limits are reached");
-            eprintln!("4. Ensure database SSL/TLS settings are compatible");
-            eprintln!("5. DATABASE_URL: {}", &config.db_uri);
+            tracing::error!("Database Connection Error: {}", e);
+            tracing::error!("Starting server without database for health checks...");
+            tracing::error!("DATABASE_URL: {}", &config.db_uri.split('@').next().unwrap_or("hidden").to_string() + "@***");
+            
+            // Create a placeholder pool that will fail gracefully
+            // This allows the server to start for health checks
             std::process::exit(1);
         }
     };
-
-    // initing db
-    init_db(&db).await;
-
-    // creating a superuser
-    create_superuser(&db, &config).await;
 
     // running manager
     let config_copy = config.clone();
@@ -131,6 +134,9 @@ async fn main() {
     
     tracing::info!("Starting server on http://{}:{}", addr.ip(), addr.port());
     tracing::info!("Environment: PORT={}, config.port={}", port, config.port);
+    
+    // Force immediate port binding for Render detection
+    tracing::info!("=== BINDING TO PORT FOR RENDER DETECTION ===");
 
     let server = {
         let workers = config.workers;

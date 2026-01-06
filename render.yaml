@@ -15,6 +15,7 @@ services:
           name: renderfs-db
           property: connectionString
         description: "PostgreSQL database connection string"
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: SUPERUSER_EMAIL

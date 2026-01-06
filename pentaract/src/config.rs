@@ -23,7 +23,11 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> PentaractResult<Self> {
-        let (db_uri, db_uri_without_dbname, db_name) = if let Ok(uri) = env::var("DATABASE_URL") {
+        let (db_uri, db_uri_without_dbname, db_name) = if let Ok(mut uri) = env::var("DATABASE_URL") {
+            // Ensure SSL mode is set for Render PostgreSQL
+            if !uri.contains("sslmode=") {
+                uri = format!("{}?sslmode=require", uri);
+            }
             (uri, None, None)
         } else {
             let db_user: String = Self::get_env_var("DATABASE_USER")?;
