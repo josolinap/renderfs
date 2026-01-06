@@ -1,17 +1,18 @@
 services:
   - type: web
-    name: pentaract
+    name: renderfs
     env: docker
-    plan: free # or whatever plan the user prefers
-    region: frankfurt # default region
+    plan: free
+    region: frankfurt
     dockerContext: .
     dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
     envVars:
       - key: PORT
         value: 8000
       - key: DATABASE_URL
         fromDatabase:
-          name: pentaract-db
+          name: renderfs-db
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
@@ -31,6 +32,6 @@ services:
         value: 14
 
 databases:
-  - name: pentaract-db
+  - name: renderfs-db
     plan: free
     postgresMajorVersion: 15

@@ -10,8 +10,8 @@ use tower_http::{
 use crate::{
     common::routing::app_state::AppState,
     routers::{
-        auth::AuthRouter, storage_workers::StorageWorkersRouter, storages::StoragesRouter,
-        users::UsersRouter,
+        auth::AuthRouter, health::HealthRouter, storage_workers::StorageWorkersRouter,
+        storages::StoragesRouter, users::UsersRouter,
     },
 };
 
@@ -47,6 +47,7 @@ impl Server {
                 "/storage_workers",
                 StorageWorkersRouter::get_router(app_state.clone()),
             )
+            .merge(HealthRouter::get_router())
             .layer(ConcurrencyLimitLayer::new(workers.into()))
             .layer(app_cors)
     }
