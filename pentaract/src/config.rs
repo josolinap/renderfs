@@ -39,14 +39,14 @@ impl Config {
         };
 
         let port = Self::get_env_var_with_default("PORT", 8000)?;
-        let workers = Self::get_env_var("WORKERS")?;
-        let channel_capacity = Self::get_env_var("CHANNEL_CAPACITY")?;
+        let workers = Self::get_env_var_with_default("WORKERS", 4)?;
+        let channel_capacity = Self::get_env_var_with_default("CHANNEL_CAPACITY", 32)?;
         let superuser_email = Self::get_env_var("SUPERUSER_EMAIL")?;
         let superuser_pass = Self::get_env_var("SUPERUSER_PASS")?;
-        let access_token_expire_in_secs = Self::get_env_var("ACCESS_TOKEN_EXPIRE_IN_SECS")?;
-        let refresh_token_expire_in_days = Self::get_env_var("REFRESH_TOKEN_EXPIRE_IN_DAYS")?;
+        let access_token_expire_in_secs = Self::get_env_var_with_default("ACCESS_TOKEN_EXPIRE_IN_SECS", 1800)?;
+        let refresh_token_expire_in_days = Self::get_env_var_with_default("REFRESH_TOKEN_EXPIRE_IN_DAYS", 14)?;
         let secret_key = Self::get_env_var("SECRET_KEY")?;
-        let telegram_api_base_url = Self::get_env_var("TELEGRAM_API_BASE_URL")?;
+        let telegram_api_base_url = Self::get_env_var_with_default("TELEGRAM_API_BASE_URL", "https://api.telegram.org".to_owned())?;
         let telegram_rate_limit = Self::get_env_var_with_default("TELEGRAM_RATE_LIMIT", 18)?;
 
         Ok(Self {
