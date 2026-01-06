@@ -69,8 +69,9 @@ async fn main() {
         .await;
     }
 
-    // Wait a bit for database to be ready (Render might need time)
-    tokio::time::sleep(time::Duration::from_secs(5)).await;
+    // Wait for database to be ready (Render might need time)
+    tracing::info!("Waiting for database to be ready...");
+    tokio::time::sleep(time::Duration::from_secs(10)).await;
     
     // set up connection pool
     let db = match get_pool(
@@ -121,7 +122,15 @@ async fn main() {
         manager.run().await;
     });
 
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port);
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(config.port);
+    
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+    
+    tracing::info!("Starting server on http://{}:{}", addr.ip(), addr.port());
+    tracing::info!("Environment: PORT={}, config.port={}", port, config.port);
 
     let server = {
         let workers = config.workers;
