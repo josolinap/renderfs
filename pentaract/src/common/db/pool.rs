@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
-pub async fn get_pool(dsn: &str, max_connection: u32, timeout: Duration) -> Result<PgPool, sqlx::Error> {
+pub async fn get_pool(dsn: &str, max_connection: u32, _timeout: Duration) -> Result<PgPool, sqlx::Error> {
     // Retry connection multiple times with exponential backoff
     let mut retries = 8;
     let mut base_delay = Duration::from_secs(3);

@@ -73,8 +73,7 @@ impl<'d> FilesRepository<'d> {
         let (path_with_stem, suffix) = {
             let mut splited_path: Vec<_> = in_obj.path.split("/").collect();
             let last = splited_path.last_mut().unwrap();
-            let mut suffix = String::new();
-            (*last, suffix) = last
+            let (_, suffix) = last
                 .split_once(".")
                 .map(|(stem, suffix)| (stem, format!(".{suffix}")))
                 .unwrap_or((last, "".to_owned()));

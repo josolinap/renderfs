@@ -95,7 +95,9 @@ async fn main() {
         Err(e) => {
             tracing::error!("Database Connection Error: {}", e);
             tracing::error!("Starting server without database for health checks...");
-            tracing::error!("DATABASE_URL: {}", &config.db_uri.split('@').next().unwrap_or("hidden").to_string() + "@***");
+            let masked_db_url = format!("{}@***", 
+                config.db_uri.split('@').next().unwrap_or("unknown"));
+            tracing::error!("DATABASE_URL: {}", masked_db_url);
             
             // Create a placeholder pool that will fail gracefully
             // This allows the server to start for health checks
