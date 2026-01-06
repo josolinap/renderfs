@@ -69,13 +69,29 @@ async fn main() {
         .await;
     }
 
+    // Wait a bit for database to be ready (Render might need time)
+    tokio::time::sleep(time::Duration::from_secs(5)).await;
+    
     // set up connection pool
-    let db = get_pool(
+    let db = match get_pool(
         &config.db_uri,
         config.workers.into(),
-        time::Duration::from_secs(30),
+        time::Duration::from_secs(60), // Increased timeout
     )
-    .await;
+    .await
+    {
+        Ok(db) => db,
+        Err(e) => {
+            eprintln!("Database Connection Error: {}", e);
+            eprintln!("\nTroubleshooting:");
+            eprintln!("1. Check if DATABASE_URL is correct");
+            eprintln!("2. Verify database is running and accessible");
+            eprintln!("3. Check if database connection limits are reached");
+            eprintln!("4. Ensure database SSL/TLS settings are compatible");
+            eprintln!("5. DATABASE_URL: {}", &config.db_uri);
+            std::process::exit(1);
+        }
+    };
 
     // initing db
     init_db(&db).await;
@@ -86,12 +102,19 @@ async fn main() {
     // running manager
     let config_copy = config.clone();
     tokio::spawn(async move {
-        let db = get_pool(
+        let db = match get_pool(
             &config_copy.db_uri,
-            config.workers.into(),
+            config_copy.workers.into(),
             time::Duration::from_secs(30),
         )
-        .await;
+        .await
+        {
+            Ok(db) => db,
+            Err(e) => {
+                tracing::error!("Failed to connect to database in storage manager: {}", e);
+                return;
+            }
+        };
         let mut manager = StorageManager::new(rx, db, config_copy);
 
         tracing::debug!("running manager");

@@ -1,0 +1,42 @@
+[
+    {
+        "key": "PORT",
+        "value": "8000"
+    },
+    {
+        "key": "WORKERS",
+        "value": "4"
+    },
+    {
+        "key": "CHANNEL_CAPACITY",
+        "value": "32"
+    },
+    {
+        "key": "TELEGRAM_API_BASE_URL",
+        "value": "https://api.telegram.org"
+    },
+    {
+        "key": "ACCESS_TOKEN_EXPIRE_IN_SECS",
+        "value": "1800"
+    },
+    {
+        "key": "REFRESH_TOKEN_EXPIRE_IN_DAYS",
+        "value": "14"
+    },
+    {
+        "key": "SECRET_KEY",
+        "value": "44a6ec54063e43cea89a18e58953108f63fd6da8587b462ca3a0dbc4cfb61fbc"
+    },
+    {
+        "key": "DATABASE_URL",
+        "value": "postgres://temp:temp@localhost:5432/temp"
+    },
+    {
+        "key": "SUPERUSER_EMAIL",
+        "value": "jomonsolinap@gmail.com"
+    },
+    {
+        "key": "SUPERUSER_PASS",
+        "value": "@$Ss07271991"
+    }
+]
