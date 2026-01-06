@@ -2,9 +2,8 @@
 ####  SERVER
 ############################################################################################
 
-# Using the `rust-musl-builder` as base image, instead of 
-# the official Rust toolchain
-FROM clux/muslrust:stable AS chef
+# Use the official Rust image instead of musl to avoid OpenSSL issues
+FROM rust:1.75 AS chef
 USER root
 RUN cargo install cargo-chef
 WORKDIR /app
@@ -16,10 +15,10 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM chef AS builder 
 COPY --from=planner /app/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY ./pentaract .
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo build --release
 
 ############################################################################################
 ####  UI
@@ -40,7 +39,7 @@ RUN pnpm run build
 # Use alpine as base for runtime to have proper SSL certs
 FROM alpine:latest AS runtime
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/pentaract /pentaract
+COPY --from=builder /app/target/release/pentaract /pentaract
 COPY --from=ui /app/dist /ui
 EXPOSE 8000
 ENTRYPOINT ["/pentaract"]
