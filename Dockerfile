@@ -31,7 +31,10 @@ RUN pnpm run build
 # Use alpine as base for runtime to have proper SSL certs
 FROM alpine:latest AS runtime
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /app/target/release/pentaract /pentaract
+# Create directory and copy binary with proper permissions
+RUN mkdir -p /app
+COPY --from=builder /app/target/release/pentaract /app/pentaract
 COPY --from=ui /app/dist /ui
+WORKDIR /app
 EXPOSE 8000
-ENTRYPOINT ["/pentaract"]
+ENTRYPOINT ["./pentaract"]
