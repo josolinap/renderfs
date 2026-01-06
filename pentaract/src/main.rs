@@ -1,9 +1,11 @@
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
+    time,
 };
 
 use tokio::{sync::mpsc, time};
+
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -55,78 +57,60 @@ async fn main() {
 
     let (tx, rx) = mpsc::channel::<ClientMessage>(config.channel_capacity.into());
 
-    // creating db
-    if let (Some(dsn), Some(name)) = (
-        config.db_uri_without_dbname.as_deref(),
-        config.db_name.as_deref(),
-    ) {
-        create_db(
-            dsn,
-            name,
-            config.workers.into(),
-            time::Duration::from_secs(30),
-        )
-        .await;
-    }
-
-    // Wait for database to be ready (Render might need time)
-    tracing::info!("Waiting for database to be ready...");
-    tokio::time::sleep(time::Duration::from_secs(10)).await;
-    
-    // set up connection pool
+    // Try to connect to database but continue even if it fails
     let db = match get_pool(
         &config.db_uri,
         config.workers.into(),
-        time::Duration::from_secs(60), // Increased timeout
+        time::Duration::from_secs(60),
     )
     .await
     {
         Ok(db) => {
             tracing::info!("Database connected successfully");
             
-            // initing db
-            init_db(&db).await;
-
-            // creating a superuser
-            create_superuser(&db, &config).await;
+            // Initialize database in background
+            let db_clone = db.clone();
+            let config_clone = config.clone();
+            tokio::spawn(async move {
+                init_db(&db_clone).await;
+                create_superuser(&db_clone, &config_clone).await;
+            });
             
-            db
+            Some(db)
         }
         Err(e) => {
             tracing::error!("Database Connection Error: {}", e);
-            tracing::error!("Starting server without database for health checks...");
             let masked_db_url = format!("{}@***", 
                 config.db_uri.split('@').next().unwrap_or("unknown"));
             tracing::error!("DATABASE_URL: {}", masked_db_url);
+            tracing::warn!("Server will start but database operations will fail");
             
-            // Create a placeholder pool that will fail gracefully
-            // This allows the server to start for health checks
-            std::process::exit(1);
+            None
         }
     };
 
-    // running manager
-    let config_copy = config.clone();
-    tokio::spawn(async move {
-        let db = match get_pool(
-            &config_copy.db_uri,
-            config_copy.workers.into(),
-            time::Duration::from_secs(30),
-        )
-        .await
-        {
-            Ok(db) => db,
-            Err(e) => {
-                tracing::error!("Failed to connect to database in storage manager: {}", e);
+    // Start storage manager if database is available
+    if let Some(ref db_connection) = db {
+        let config_copy = config.clone();
+        tokio::spawn(async move {
+            let db = get_pool(
+                &config_copy.db_uri,
+                config_copy.workers.into(),
+                time::Duration::from_secs(30),
+            )
+            .await
+            .unwrap_or_else(|_| {
+                tracing::error!("Failed to reconnect to database in storage manager");
                 return;
-            }
-        };
-        let mut manager = StorageManager::new(rx, db, config_copy);
+            });
+            
+            let mut manager = StorageManager::new(rx, db, config_copy);
+            tracing::debug!("running manager");
+            manager.run().await;
+        });
+    }
 
-        tracing::debug!("running manager");
-        manager.run().await;
-    });
-
+    // Always start the server for Render port detection
     let port = std::env::var("PORT")
         .ok()
         .and_then(|p| p.parse().ok())
@@ -134,18 +118,15 @@ async fn main() {
     
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
     
-    tracing::info!("Starting server on http://{}:{}", addr.ip(), addr.port());
-    tracing::info!("Environment: PORT={}, config.port={}", port, config.port);
+    tracing::info!("=== STARTING SERVER ON PORT {} FOR RENDER ===", port);
+    tracing::info!("Server will start at: http://{}:{}", addr.ip(), addr.port());
     
-    // Force immediate port binding for Render detection
-    tracing::info!("=== BINDING TO PORT FOR RENDER DETECTION ===");
+    // Create app state with optional database
+    let app_state = AppState::new(db, config, tx);
+    let shared_state = Arc::new(app_state);
+    
+    let server = Server::build_server(config.workers.into(), shared_state);
 
-    let server = {
-        let workers = config.workers;
-        let app_state = AppState::new(db, config, tx);
-        let shared_state = Arc::new(app_state);
-        Server::build_server(workers.into(), shared_state)
-    };
-
+    tracing::info!("Server starting...");
     server.run(&addr).await
 }
