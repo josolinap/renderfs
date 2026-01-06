@@ -28,9 +28,9 @@ RUN pnpm run build
 ####  RUNNING
 ############################################################################################
 
-# Use alpine as base for runtime to have proper SSL certs
-FROM alpine:latest AS runtime
-RUN apk --no-cache add ca-certificates
+# Use debian slim as base for runtime to match builder libc (glibc)
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 # Create directory and copy binary with proper permissions
 RUN mkdir -p /app
 COPY --from=builder /app/target/release/pentaract /app/pentaract
