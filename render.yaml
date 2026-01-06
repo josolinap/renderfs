@@ -3,7 +3,7 @@ services:
     name: renderfs
     env: docker
     plan: free
-    region: frankfurt
+    region: singapore
     dockerContext: .
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
