@@ -145,10 +145,22 @@ docker logs -f pentaract
 
 </details>
 
-<details>
-  <summary>Docker with pre-built image</summary>
+</details>
 
-**TODO**
+<details>
+  <summary>Render.com <i>(easiest for free hosting)</i></summary>
+
+You can deploy Pentaract to Render.com using the included `render.yaml` blueprint.
+
+1. Fork this repository.
+2. In Render dashboard, click **Blueprints** -> **New Blueprint Instance**.
+3. Select your fork.
+4. Fill in the required environment variables:
+   - `SUPERUSER_EMAIL`: Your admin email.
+   - `SUPERUSER_PASS`: Your admin password.
+5. Click **Apply**.
+
+Render will automatically provision a PostgreSQL database and a Web Service for the app.
 
 </details>
 
