@@ -28,6 +28,7 @@ impl Config {
             if !uri.contains("sslmode=") {
                 uri = format!("{}?sslmode=require", uri);
             }
+            tracing::info!("Using DATABASE_URL from environment");
             (uri, None, None)
         } else {
             let db_user: String = Self::get_env_var("DATABASE_USER")?;
@@ -42,7 +43,7 @@ impl Config {
             (db_uri, Some(db_uri_without_dbname), Some(db_name))
         };
 
-        let port = Self::get_env_var_with_default("PORT", 8000)?;
+        let port = Self::get_env_var_with_default("PORT", 10000)?;
         let workers = Self::get_env_var_with_default("WORKERS", 4)?;
         let channel_capacity = Self::get_env_var_with_default("CHANNEL_CAPACITY", 32)?;
         let superuser_email = Self::get_env_var("SUPERUSER_EMAIL")?;
