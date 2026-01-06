@@ -28,7 +28,21 @@ mod storage_manager;
 
 #[tokio::main]
 async fn main() {
-    let config = Config::new().unwrap();
+    let config = match Config::new() {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("Configuration Error: {}", e);
+            eprintln!("\nRequired environment variables:");
+            eprintln!("- SUPERUSER_EMAIL: Email for the admin account");
+            eprintln!("- SUPERUSER_PASS: Password for the admin account");
+            eprintln!("- SECRET_KEY: JWT signing secret");
+            eprintln!("- DATABASE_URL: PostgreSQL connection string");
+            eprintln!("\nOr set individual database variables:");
+            eprintln!("- DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME");
+            eprintln!("- DATABASE_HOST, DATABASE_PORT");
+            std::process::exit(1);
+        }
+    };
 
     tracing_subscriber::registry()
         .with(
