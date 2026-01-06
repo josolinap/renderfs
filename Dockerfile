@@ -37,9 +37,10 @@ RUN pnpm run build
 ####  RUNNING
 ############################################################################################
 
-# We do not need the Rust toolchain to run the binary!
-FROM scratch AS runtime
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/pentaract /
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# Use alpine as base for runtime to have proper SSL certs
+FROM alpine:latest AS runtime
+RUN apk --no-cache add ca-certificates
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/pentaract /pentaract
 COPY --from=ui /app/dist /ui
+EXPOSE 8000
 ENTRYPOINT ["/pentaract"]
